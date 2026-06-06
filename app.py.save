@@ -1,0 +1,86 @@
+import streamlit as st
+import joblib
+import numpy as np
+# 💡 번역 라이브러리 추가
+from deep_translator import GoogleTranslator
+
+model = joblib.load("job_model.pkl")
+vectorizer = joblib.load("vectorizer.pkl")
+
+# 직무 영문명을 한국어로 매핑하는 사전
+job_korean = {
+    "ENGINEERING": "엔지니어링",
+    "INFORMATION-TECHNOLOGY": "정보기술(IT)",
+    "BUSINESS-DEVELOPMENT": "사업개발",
+    "HR": "인사(HR)",
+    "ACCOUNTANT": "회계",
+    "FINANCE": "금융",
+    "HEALTHCARE": "보건·의료",
+    "SALES": "영업",
+    "TEACHER": "교육",
+    "DESIGNER": "디자인",
+    "DIGITAL-MEDIA": "디지털미디어",
+    "PUBLIC-RELATIONS": "홍보(PR)",
+    "CONSULTANT": "컨설팅",
+    "BANKING": "은행",
+    "CONSTRUCTION": "건설",
+    "AGRICULTURE": "농업",
+    "AUTOMOBILE": "자동차",
+    "CHEF": "조리·외식",
+    "FITNESS": "스포츠·피트니스",
+    "AVIATION": "항공",
+    "ADVOCATE": "법률",
+    "APPAREL": "패션·의류",
+    "ARTS": "예술",
+    "BPO": "고객서비스(BPO)"
+}
+
+st.set_page_config(
+    page_title="AI 직무 추천 시스템",
+    page_icon="🤖"
+)
+
+st.title("🤖 AI 기반 직무 추천 시스템")
+
+st.markdown("""
+### 청년 구직자의 역량을 분석하여 적합한 직무를 추천합니다.
+
+* **✔ AI 기반 직무 적합도 분석**  
+* **✔ 맞춤형 직무 추천 TOP 3 제공**  
+* **✔ 취업난 및 일자리 미스매치 문제 해결**
+""")
+
+st.write("---")
+
+st.write("보유 역량과 경험을 입력하면 AI가 적합한 직무를 추천합니다.")
+
+# 💡 한국어 예시도 안내 멘트에 추가했습니다.
+user_input = st.text_area(
+    "보유 역량 입력",
+    placeholder="예: 파이썬, 데이터 분석, 머신러닝 (한글/영어 모두 가능)"
+)
+
+if st.button("직무 추천 받기"):
+    
+    # 💡 [핵심 코드] 입력된 텍스트를 감지하여 AI가 이해할 수 있도록 영어로 자동 번역합니다.
+    with st.spinner("역량을 분석하는 중입니다..."):
+        translated_input = GoogleTranslator(source='auto', target='en').translate(user_input)
+    
+    # AI 모델에는 영어로 번역된 텍스트를 집어넣습니다.
+    text_vector = vectorizer.transform([translated_input])
+
+    probs = model.predict_proba(text_vector)[0]
+
+    top3_idx = np.argsort(probs)[::-1][:3]
+
+    classes = model.classes_
+
+    st.subheader("추천 직무 TOP 3")
+
+    for rank, idx in enumerate(top3_idx, start=1):
+        english_job = classes[idx]
+        korean_job = job_korean.get(english_job, english_job)
+        
+        st.write(
+            f"{rank}위 : **{korean_job}** ({probs[idx]*100:.2f}%)"
+        )
