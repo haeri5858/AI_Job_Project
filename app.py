@@ -126,7 +126,14 @@ if st.button("직무 추천 받기"):
             companies = job_companies.get(english_job, "관련 기업 정보 없음")
             
             # 결과 출력 (자격증과 추천 기업을 깔끔하게 정렬)
-            st.write(f"{rank}위 : **{korean_job}** ({probs[idx]*100:.2f}%)")
+            if rank == 1:
+              grade = "🌟 매우 적합"
+            elif rank == 2:
+              grade = "✅ 적합"
+            else:
+              grade = "📌 추천"
+
+            st.write(f"{rank}위 : **{korean_job}** - {grade}")
             st.caption(f"> 🎖️ **추천 자격증:** {certs}")
             st.caption(f"> 🏢 **주요 추천 기업:** {companies}")
             st.write("")
